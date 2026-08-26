@@ -11,6 +11,7 @@ import { renderSchedule, unmountSchedule } from "./schedule.js";
 import { renderClubs, unmountClubs } from "./clubs.js";
 import { renderPolls, unmountPolls } from "./polls.js";
 import { renderFaq, unmountFaq } from "./faq.js";
+import { renderSocoop, unmountSocoop } from "./socoop.js";
 import { renderAdmin, unmountAdmin } from "./admin.js";
 
 // ── 섹션 정의 (아이콘 · 색상 · 렌더러) ─────────────────
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'schedule', icon: '📅', label: '학사일정', color: 'linear-gradient(145deg,#C7D2FE,#A5B4FC)', mount: renderSchedule, unmount: unmountSchedule, visible: () => true },
   { id: 'clubs', icon: '🎯', label: '동아리', color: 'linear-gradient(145deg,#FDE68A,#FCD34D)', mount: renderClubs, unmount: unmountClubs, visible: () => true },
   { id: 'polls', icon: '📊', label: '설문/투표', color: 'linear-gradient(145deg,#A5F3FC,#67E8F9)', mount: renderPolls, unmount: unmountPolls, visible: () => true },
+  { id: 'socoop', icon: '🏪', label: '소쿱놀이(매점/카페)', color: 'linear-gradient(145deg,#FDA4AF,#FB7185)', mount: renderSocoop, unmount: unmountSocoop, visible: () => true },
   { id: 'faq', icon: '❓', label: 'FAQ', color: 'linear-gradient(145deg,#FBCFE8,#F9A8D4)', mount: renderFaq, unmount: unmountFaq, visible: () => true },
   { id: 'admin', icon: '⚙️', label: '관리자', color: 'linear-gradient(145deg,#E2E8F0,#CBD5E1)', mount: renderAdmin, unmount: unmountAdmin, visible: (me) => isAdminRole(me?.role) },
 ];
@@ -129,7 +131,7 @@ function buildHomeScreen(me) {
       const badge = document.getElementById('violation-badge');
       if (badge) {
         badge.innerHTML = `<span style="font-size:0.9rem">🚨</span> 누적 위반: 3회 (테스트)`;
-        badge.style.background = 'rgba(239,68,68,0.9)'; 
+        badge.style.background = 'rgba(239,68,68,0.9)';
       }
     }, 500);
   } else if (GAS_API_URL && GAS_API_URL.startsWith('http')) {

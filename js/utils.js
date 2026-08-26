@@ -91,6 +91,7 @@ export const ROLE_LABEL = {
   department_head:  '부장',
   vice_president:   '부학생회장',
   president:        '회장',
+  socoop_admin:     '매점지기',
 };
 
 export function isAdminRole(role) {

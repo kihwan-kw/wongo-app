@@ -230,7 +230,7 @@ function renderRoleManagement(container) {
 
 function buildUserRoleRow(u) {
   const roleSelect = el('select', {},
-    ...['student','department_head','vice_president','president'].map(r =>
+    ...['student','department_head','vice_president','president','socoop_admin'].map(r =>
       el('option', { value:r, selected: u.role===r ? '' : null }, ROLE_LABEL[r])
     ),
   );
