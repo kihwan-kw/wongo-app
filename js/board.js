@@ -1,24 +1,33 @@
-// js/board.js — 익명 게시판 탭
+// js/board.js — 익명 게시판 (목록 → 상세 / 실시간 조회수)
 
 import { db } from "./firebase-config.js";
 import {
-  collection, addDoc, deleteDoc, doc,
-  onSnapshot, orderBy, query, serverTimestamp, getDocs,
+  collection, addDoc, deleteDoc, doc, increment,
+  onSnapshot, orderBy, query, serverTimestamp, updateDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { el, formatDate, toast, isAdminRole, emptyState, confirmDialog } from "./utils.js";
 
-let unsubPosts = null;
+let unsubPosts   = null;  // 목록 구독
+let unsubDetail  = null;  // 게시글 문서 구독
+let unsubComment = null;  // 댓글 컬렉션 구독
 
+// ══════════════════════════════════════════════════════════
+// 목록 화면
+// ══════════════════════════════════════════════════════════
 export function renderBoard(container, me) {
+  _cleanDetail();
   container.innerHTML = '';
 
   // ── 작성 폼 ──────────────────────────────────────────
+  const titleInput   = el('input',    { type: 'text', placeholder: '글 제목' });
+  const contentInput = el('textarea', { placeholder: '내용을 자유롭게 적어보세요.\n익명 별명으로 표시됩니다.', rows: '3' });
+  const submitBtn    = el('button',   { class: 'btn btn-primary btn-sm', type: 'button' }, '게시');
   let formOpen = false;
-  const contentInput = el('textarea', { placeholder: '자유롭게 의견을 남겨보세요. (게시판 내 모든 글에는 고정 별명이 표시됩니다)', rows: '3' });
-  const submitBtn    = el('button', { class: 'btn btn-primary btn-sm', type: 'button' }, '게시');
-  const formBody     = el('div', { class: 'hidden flex flex-col gap-3' },
+
+  const formBody = el('div', { class: 'hidden flex flex-col gap-3' },
+    el('div', { class: 'form-group' }, el('label', {}, '제목'), titleInput),
     el('div', { class: 'form-group' }, el('label', {}, '내용'), contentInput),
-    el('p', { class: 'text-xs text-muted' }, `나의 별명: ${me.anonName || '?'}`),
+    el('p',   { class: 'text-xs text-muted' }, `나의 별명: ${me.anonName || '?'}`),
     submitBtn,
   );
 
@@ -32,18 +41,26 @@ export function renderBoard(container, me) {
   }, '✏️ 글쓰기');
 
   submitBtn.addEventListener('click', async () => {
+    const title   = titleInput.value.trim();
     const content = contentInput.value.trim();
+    if (!title)   { toast('제목을 입력해주세요.', 'error');  return; }
     if (!content) { toast('내용을 입력해주세요.', 'error'); return; }
     submitBtn.disabled = true;
     try {
       await addDoc(collection(db, 'posts'), {
+        title,
         content,
         authorUid:  me.uid,
         authorName: me.anonName || '익명',
         createdAt:  serverTimestamp(),
+        viewCount:  0,
       });
       toast('게시되었습니다.', 'success');
+      titleInput.value   = '';
       contentInput.value = '';
+      formOpen = false;
+      formBody.classList.add('hidden');
+      toggleBtn.textContent = '✏️ 글쓰기';
     } catch (err) {
       console.error(err);
       toast('게시 중 오류가 발생했습니다.', 'error');
@@ -71,7 +88,22 @@ export function renderBoard(container, me) {
       listEl.appendChild(emptyState('💬', '아직 게시글이 없습니다. 첫 글을 남겨보세요!'));
       return;
     }
-    snap.forEach(docSnap => listEl.appendChild(buildPostItem(docSnap, me)));
+    snap.forEach(docSnap => {
+      const d     = docSnap.data();
+      const title = d.title || d.content?.slice(0, 30) + '…' || '(제목 없음)';
+      const views = d.viewCount || 0;
+
+      const item = el('div', { class: 'post-item post-list-item' },
+        el('div', { class: 'post-title' }, title),
+        el('div', { class: 'post-meta' },
+          el('span', {}, d.authorName || '익명'),
+          el('span', {}, formatDate(d.createdAt)),
+          el('span', { class: 'post-view-count' }, `👁 ${views}`),
+        ),
+      );
+      item.addEventListener('click', () => openPostDetail(docSnap.id, container, me));
+      listEl.appendChild(item);
+    });
   }, err => {
     console.error(err);
     listEl.appendChild(emptyState('⚠️', '게시판을 불러오지 못했습니다.'));
@@ -79,132 +111,168 @@ export function renderBoard(container, me) {
 }
 
 export function unmountBoard() {
+  _cleanAll();
+}
+
+// ══════════════════════════════════════════════════════════
+// 상세 화면
+// ══════════════════════════════════════════════════════════
+function openPostDetail(postId, container, me) {
+  // 목록 구독 해제 (상세 화면으로 전환)
   if (unsubPosts) { unsubPosts(); unsubPosts = null; }
-}
-
-// ── 게시글 카드 ──────────────────────────────────────
-function buildPostItem(docSnap, me) {
-  const d = docSnap.data();
-  const canDelete = isAdminRole(me.role) || d.authorUid === me.uid;
-
-  const commentsEl = el('div', { class: 'comment-section' });
-  let commentsLoaded = false;
-
-  const item = el('div', { class: 'post-item' },
-    el('div', { class: 'flex items-center justify-between' },
-      el('span', { class: 'post-title' }, d.authorName || '익명'),
-      canDelete
-        ? el('button', { class: 'btn btn-danger btn-xs',
-            onclick: e => { e.stopPropagation(); handleDeletePost(docSnap.id); }
-          }, '🗑️')
-        : null,
-    ),
-    el('div', { class: 'post-meta' }, el('span', {}, formatDate(d.createdAt))),
-    el('div', { class: 'post-body', style: { display:'block', marginTop:'8px' } }, d.content || ''),
-    el('button', {
-      class: 'btn btn-ghost btn-xs mt-2',
-      style: { fontSize:'.78rem' },
-      onclick: e => { e.stopPropagation(); toggleComments(docSnap.id, commentsEl, me, commentsLoaded, (v) => { commentsLoaded = v; }); },
-    }, '💬 댓글 보기'),
-    commentsEl,
-  );
-  return item;
-}
-
-function toggleComments(postId, container, me, loaded, setLoaded) {
-  if (container.children.length > 0) {
-    container.innerHTML = '';
-    setLoaded(false);
-    return;
-  }
-  loadComments(postId, container, me);
-  setLoaded(true);
-}
-
-async function loadComments(postId, container, me) {
   container.innerHTML = '';
-  container.appendChild(el('div', { class: 'text-xs text-muted' }, '댓글 로딩 중...'));
 
-  try {
-    const q = query(
-      collection(db, 'posts', postId, 'comments'),
-      orderBy('createdAt', 'asc')
-    );
-    const snap = await getDocs(q);
-    container.innerHTML = '';
+  // 조회수 +1
+  updateDoc(doc(db, 'posts', postId), { viewCount: increment(1) }).catch(console.error);
 
-    const commentList = el('div', { class: 'comment-list' });
-    snap.forEach(cs => {
-      const cd = cs.data();
-      const canDel = isAdminRole(me.role) || cd.authorUid === me.uid;
-      commentList.appendChild(el('div', { class: 'comment-item' },
-        el('div', { class: 'flex items-center justify-between' },
-          el('div', { class: 'comment-author' }, cd.authorName || '익명'),
-          canDel ? el('button', { class: 'btn btn-danger btn-xs',
-            onclick: () => handleDeleteComment(postId, cs.id, container, me),
-          }, '✕') : null,
-        ),
-        el('div', { class: 'comment-text' }, cd.content || ''),
-      ));
-    });
+  // 뒤로가기 버튼
+  const backBtn = el('button', { class: 'board-back-btn' }, '← 목록으로');
+  backBtn.addEventListener('click', () => {
+    _cleanDetail();
+    renderBoard(container, me);
+  });
+  container.appendChild(backBtn);
 
-    if (snap.empty) {
-      commentList.appendChild(el('p', { class: 'text-xs text-muted' }, '댓글이 없습니다.'));
+  // 게시글 본문 (실시간)
+  const detailBox = el('div', { class: 'post-detail' });
+  container.appendChild(detailBox);
+
+  const postRef = doc(db, 'posts', postId);
+  unsubDetail = onSnapshot(postRef, snap => {
+    if (!snap.exists()) {
+      detailBox.innerHTML = '';
+      detailBox.appendChild(emptyState('⚠️', '삭제된 게시글입니다.'));
+      return;
     }
+    const d         = snap.data();
+    const canDelete = isAdminRole(me.role) || d.authorUid === me.uid;
 
-    const input   = el('input', { type: 'text', placeholder: '댓글 입력...', onclick: e => e.stopPropagation() });
-    const postBtn = el('button', { class: 'btn btn-primary btn-sm', onclick: e => e.stopPropagation() }, '등록');
+    detailBox.innerHTML = '';
+    detailBox.appendChild(
+      el('div', { class: 'post-detail-inner' },
+        // 제목
+        el('h3', { class: 'post-detail-title' }, d.title || '(제목 없음)'),
+        // 메타
+        el('div', { class: 'post-detail-meta' },
+          el('span', {}, `✍️ ${d.authorName || '익명'}`),
+          el('span', {}, formatDate(d.createdAt)),
+          el('span', { class: 'post-view-count' }, `👁 ${d.viewCount || 0}`),
+        ),
+        // 본문
+        el('div', { class: 'post-detail-body' }, d.content || ''),
+        // 삭제 버튼
+        canDelete
+          ? el('div', { class: 'post-detail-actions' },
+              el('button', {
+                class: 'btn btn-danger btn-xs',
+                onclick: async () => {
+                  if (!confirmDialog('게시글을 삭제하시겠습니까?')) return;
+                  await deleteDoc(postRef).catch(console.error);
+                  _cleanDetail();
+                  renderBoard(container, me);
+                },
+              }, '🗑️ 삭제'),
+            )
+          : null,
+      ),
+    );
+  });
 
-    postBtn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const text = input.value.trim();
-      if (!text) return;
-      postBtn.disabled = true;
-      try {
-        await addDoc(collection(db, 'posts', postId, 'comments'), {
-          content:    text,
-          authorUid:  me.uid,
-          authorName: me.anonName || '익명',
-          createdAt:  serverTimestamp(),
-        });
-        input.value = '';
-        await loadComments(postId, container, me);
-      } catch (err) {
-        console.error(err);
-        toast('댓글 등록 중 오류가 발생했습니다.', 'error');
-      } finally {
-        postBtn.disabled = false;
-      }
+  // 댓글 섹션 (실시간)
+  const commentsBox = el('div');
+  container.appendChild(commentsBox);
+  _renderComments(postId, commentsBox, me);
+}
+
+// ══════════════════════════════════════════════════════════
+// 댓글
+// ══════════════════════════════════════════════════════════
+function _renderComments(postId, container, me) {
+  container.innerHTML = '';
+
+  const commentList = el('div', { class: 'comment-list' });
+  const inputRow    = _buildCommentInput(postId, me);
+
+  container.appendChild(
+    el('div', { class: 'comment-section' },
+      el('div', { class: 'comment-section-title' }, '💬 댓글'),
+      commentList,
+      inputRow,
+    ),
+  );
+
+  const q = query(
+    collection(db, 'posts', postId, 'comments'),
+    orderBy('createdAt', 'asc'),
+  );
+  unsubComment = onSnapshot(q, snap => {
+    commentList.innerHTML = '';
+    if (snap.empty) {
+      commentList.appendChild(
+        el('p', { class: 'text-xs text-muted', style: { padding: '6px 0' } }, '아직 댓글이 없습니다.'),
+      );
+      return;
+    }
+    snap.forEach(cs => {
+      const cd     = cs.data();
+      const canDel = isAdminRole(me.role) || cd.authorUid === me.uid;
+      commentList.appendChild(
+        el('div', { class: 'comment-item' },
+          el('div', { class: 'flex items-center justify-between' },
+            el('div', { class: 'comment-author' }, cd.authorName || '익명'),
+            canDel
+              ? el('button', {
+                  class: 'btn btn-danger btn-xs',
+                  onclick: async () => {
+                    if (!confirmDialog('댓글을 삭제하시겠습니까?')) return;
+                    await deleteDoc(doc(db, 'posts', postId, 'comments', cs.id)).catch(console.error);
+                  },
+                }, '✕')
+              : null,
+          ),
+          el('div', { class: 'comment-text' }, cd.content || ''),
+        ),
+      );
     });
-
-    container.appendChild(commentList);
-    container.appendChild(el('div', { class: 'comment-input-row', onclick: e => e.stopPropagation() }, input, postBtn));
-  } catch (err) {
-    console.error(err);
-    container.innerHTML = '';
-    container.appendChild(el('p', { class: 'text-xs text-muted' }, '댓글을 불러오지 못했습니다.'));
-  }
+  });
 }
 
-async function handleDeletePost(id) {
-  if (!confirmDialog('게시글을 삭제하시겠습니까?')) return;
-  try {
-    await deleteDoc(doc(db, 'posts', id));
-    toast('삭제되었습니다.', 'success');
-  } catch (err) {
-    console.error(err);
-    toast('삭제 중 오류가 발생했습니다.', 'error');
-  }
+function _buildCommentInput(postId, me) {
+  const input   = el('input', { type: 'text', placeholder: '댓글을 입력하세요...' });
+  const postBtn = el('button', { class: 'btn btn-primary btn-sm' }, '등록');
+
+  const send = async () => {
+    const text = input.value.trim();
+    if (!text) return;
+    postBtn.disabled = true;
+    try {
+      await addDoc(collection(db, 'posts', postId, 'comments'), {
+        content:    text,
+        authorUid:  me.uid,
+        authorName: me.anonName || '익명',
+        createdAt:  serverTimestamp(),
+      });
+      input.value = '';
+    } catch (err) {
+      console.error(err);
+      toast('댓글 등록 중 오류가 발생했습니다.', 'error');
+    } finally {
+      postBtn.disabled = false;
+    }
+  };
+
+  postBtn.addEventListener('click', send);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  return el('div', { class: 'comment-input-row' }, input, postBtn);
 }
 
-async function handleDeleteComment(postId, commentId, container, me) {
-  if (!confirmDialog('댓글을 삭제하시겠습니까?')) return;
-  try {
-    await deleteDoc(doc(db, 'posts', postId, 'comments', commentId));
-    await loadComments(postId, container, me);
-    toast('삭제되었습니다.', 'success');
-  } catch (err) {
-    console.error(err);
-    toast('삭제 중 오류가 발생했습니다.', 'error');
-  }
+// ── 구독 정리 ─────────────────────────────────────────────
+function _cleanDetail() {
+  if (unsubDetail)  { unsubDetail();  unsubDetail  = null; }
+  if (unsubComment) { unsubComment(); unsubComment = null; }
+}
+function _cleanAll() {
+  if (unsubPosts) { unsubPosts(); unsubPosts = null; }
+  _cleanDetail();
 }

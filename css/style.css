@@ -1093,47 +1093,52 @@ img { max-width: 100%; }
 
 .home-card {
   aspect-ratio: 1;
-  border-radius: 20px;
+  border-radius: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border: none;
-  cursor: pointer;
-  color: white;
+  gap: 10px;
+  /* 파스텔 배경에는 어두운 텍스트 */
+  color: #1E293B;
   font-family: inherit;
-  box-shadow: 0 6px 20px rgba(0,0,0,.16);
+  /* 파스텔에 어울리는 연한 그림자 */
+  box-shadow: 0 4px 16px rgba(0,0,0,.08), inset 0 1px 0 rgba(255,255,255,.7);
+  border: 1.5px solid rgba(255,255,255,.8);
   transition: transform .12s ease, box-shadow .12s ease;
   -webkit-tap-highlight-color: transparent;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 .home-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(255,255,255,0);
+  background: rgba(0,0,0,0);
   transition: background .1s;
 }
 .home-card:active {
   transform: scale(.94);
-  box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.06);
 }
-.home-card:active::after { background: rgba(255,255,255,.18); }
+.home-card:active::after { background: rgba(0,0,0,.06); }
 
 .home-card-icon {
-  font-size: 2rem;
+  font-size: 2.8rem;
   line-height: 1;
   display: block;
+  /* 아이콘에 미세한 드롭 샤도 */
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.12));
 }
 .home-card-label {
-  font-size: .72rem;
+  font-size: .78rem;
   font-weight: 700;
+  color: #334155;
   letter-spacing: -.01em;
   display: block;
   text-align: center;
-  padding: 0 4px;
+  padding: 0 6px;
   line-height: 1.2;
 }
 
@@ -1183,8 +1188,8 @@ img { max-width: 100%; }
     gap: 18px;
     padding: 28px 24px;
   }
-  .home-card-icon { font-size: 2.4rem; }
-  .home-card-label { font-size: .82rem; }
+  .home-card-icon  { font-size: 3.2rem; }
+  .home-card-label { font-size: .88rem; }
   .tab-content { padding: 20px 16px 40px; }
   #toast-container {
     bottom: 24px;
@@ -1205,3 +1210,148 @@ img { max-width: 100%; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 }
+
+/* ── Board: 목록 아이템 ─────────────────────────────── */
+.post-list { display: flex; flex-direction: column; gap: 8px; }
+.post-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+  -webkit-tap-highlight-color: transparent;
+}
+.post-item:hover  { background: var(--primary-light); border-color: var(--primary); }
+.post-item:active { transform: scale(.98); }
+.post-title {
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .76rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.post-view-count {
+  margin-left: auto;
+  font-size: .76rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Board: 목록으로 버튼 ──────────────────────────── */
+.board-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: background var(--transition);
+  -webkit-tap-highlight-color: transparent;
+  min-height: 40px;
+}
+.board-back-btn:active { background: #dbeafe; }
+
+/* ── Board: 상세 화면 ─────────────────────────────── */
+.post-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+  animation: pageSlideIn .2s ease-out;
+}
+.post-detail-inner { padding: 18px 16px; }
+.post-detail-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.post-detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .78rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: 14px;
+}
+.post-detail-body {
+  font-size: .93rem;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.post-detail-actions {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Board: 댓글 섹션 ─────────────────────────────── */
+.comment-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  animation: pageSlideIn .2s ease-out;
+}
+.comment-section-title {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.comment-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.comment-item {
+  background: var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.comment-author { font-size: .78rem; font-weight: 600; color: var(--primary); }
+.comment-text   { font-size: .88rem; color: var(--text-secondary); margin-top: 4px; word-break: break-word; }
+.comment-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.comment-input-row input {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-size: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  transition: border-color var(--transition);
+}
+.comment-input-row input:focus { border-color: var(--primary); }
+

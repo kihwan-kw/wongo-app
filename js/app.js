@@ -15,15 +15,15 @@ import { renderAdmin,      unmountAdmin      } from "./admin.js";
 
 // ── 섹션 정의 (아이콘 · 색상 · 렌더러) ─────────────────
 const SECTIONS = [
-  { id: 'notices',     icon: '📢', label: '공지사항',  color: 'linear-gradient(135deg,#3B82F6,#1D4ED8)', mount: renderNotices,     unmount: unmountNotices,     visible: () => true },
-  { id: 'suggestions', icon: '📬', label: '건의함',    color: 'linear-gradient(135deg,#8B5CF6,#6D28D9)', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
-  { id: 'board',       icon: '💬', label: '익명게시판', color: 'linear-gradient(135deg,#F97316,#EA580C)', mount: renderBoard,       unmount: unmountBoard,       visible: () => true },
-  { id: 'meal',        icon: '🍱', label: '급식',      color: 'linear-gradient(135deg,#10B981,#059669)', mount: renderMeal,        unmount: unmountMeal,        visible: () => true },
-  { id: 'schedule',    icon: '📅', label: '학사일정',  color: 'linear-gradient(135deg,#6366F1,#4F46E5)', mount: renderSchedule,    unmount: unmountSchedule,    visible: () => true },
-  { id: 'clubs',       icon: '🎯', label: '동아리',    color: 'linear-gradient(135deg,#F59E0B,#D97706)', mount: renderClubs,       unmount: unmountClubs,       visible: () => true },
-  { id: 'polls',       icon: '📊', label: '설문/투표', color: 'linear-gradient(135deg,#06B6D4,#0891B2)', mount: renderPolls,       unmount: unmountPolls,       visible: () => true },
-  { id: 'faq',         icon: '❓', label: 'FAQ',       color: 'linear-gradient(135deg,#EC4899,#DB2777)', mount: renderFaq,         unmount: unmountFaq,         visible: () => true },
-  { id: 'admin',       icon: '⚙️', label: '관리자',    color: 'linear-gradient(135deg,#64748B,#475569)', mount: renderAdmin,       unmount: unmountAdmin,       visible: (me) => isAdminRole(me?.role) },
+  { id: 'notices',     icon: '📢', label: '공지사항',  color: 'linear-gradient(145deg,#BFDBFE,#93C5FD)', mount: renderNotices,     unmount: unmountNotices,     visible: () => true },
+  { id: 'suggestions', icon: '📬', label: '건의함',    color: 'linear-gradient(145deg,#DDD6FE,#C4B5FD)', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
+  { id: 'board',       icon: '💬', label: '익명게시판', color: 'linear-gradient(145deg,#FED7AA,#FDBA74)', mount: renderBoard,       unmount: unmountBoard,       visible: () => true },
+  { id: 'meal',        icon: '🍱', label: '급식',      color: 'linear-gradient(145deg,#A7F3D0,#6EE7B7)', mount: renderMeal,        unmount: unmountMeal,        visible: () => true },
+  { id: 'schedule',    icon: '📅', label: '학사일정',  color: 'linear-gradient(145deg,#C7D2FE,#A5B4FC)', mount: renderSchedule,    unmount: unmountSchedule,    visible: () => true },
+  { id: 'clubs',       icon: '🎯', label: '동아리',    color: 'linear-gradient(145deg,#FDE68A,#FCD34D)', mount: renderClubs,       unmount: unmountClubs,       visible: () => true },
+  { id: 'polls',       icon: '📊', label: '설문/투표', color: 'linear-gradient(145deg,#A5F3FC,#67E8F9)', mount: renderPolls,       unmount: unmountPolls,       visible: () => true },
+  { id: 'faq',         icon: '❓', label: 'FAQ',       color: 'linear-gradient(145deg,#FBCFE8,#F9A8D4)', mount: renderFaq,         unmount: unmountFaq,         visible: () => true },
+  { id: 'admin',       icon: '⚙️', label: '관리자',    color: 'linear-gradient(145deg,#E2E8F0,#CBD5E1)', mount: renderAdmin,       unmount: unmountAdmin,       visible: (me) => isAdminRole(me?.role) },
 ];
 
 // ── 상태 ────────────────────────────────────────────────
