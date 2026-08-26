@@ -11,7 +11,7 @@ import {
   sendPasswordResetEmail,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  doc, setDoc, getDoc, serverTimestamp,
+  doc, setDoc, getDoc, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { toast } from "./utils.js";
 
@@ -177,19 +177,29 @@ export function initAuth(onUser) {
     }
   });
 
+  let unsubUser = null;
   // Auth 상태 변화 감지
-  return onAuthStateChanged(auth, async (user) => {
+  return onAuthStateChanged(auth, (user) => {
+    if (unsubUser) {
+      unsubUser();
+      unsubUser = null;
+    }
     if (!user) {
       onUser(null);
       return;
     }
-    try {
-      const me = await fetchUserDoc(user.uid);
-      onUser(me);
-    } catch (err) {
-      console.error('사용자 정보 조회 실패:', err);
+    
+    // 실시간 사용자 정보 연동
+    unsubUser = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+      if (!snap.exists()) {
+        onUser(null);
+      } else {
+        onUser({ uid: user.uid, ...snap.data() });
+      }
+    }, (err) => {
+      console.error('사용자 정보 실시간 조회 실패:', err);
       onUser(null);
-    }
+    });
   });
 }
 

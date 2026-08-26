@@ -25,6 +25,9 @@ export function renderBoard(container, me) {
   let formOpen = false;
 
   const formBody = el('div', { class: 'hidden flex flex-col gap-3' },
+    el('div', { class: 'alert warning', style: { fontSize: '0.8rem', padding: '8px', marginBottom: '4px' } },
+      '⚠️ 타인을 비방하거나 조롱, 욕설이 포함된 글은 통보 없이 삭제되며 이용이 제한될 수 있습니다. 서로를 배려하는 따뜻한 공간을 만들어주세요.'
+    ),
     el('div', { class: 'form-group' }, el('label', {}, '제목'), titleInput),
     el('div', { class: 'form-group' }, el('label', {}, '내용'), contentInput),
     el('p',   { class: 'text-xs text-muted' }, `나의 별명: ${me.anonName || '?'}`),

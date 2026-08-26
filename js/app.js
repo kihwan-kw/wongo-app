@@ -2,6 +2,10 @@
 
 import { initAuth, handleLogout } from "./auth.js";
 import { isAdminRole, ROLE_LABEL } from "./utils.js";
+import { db } from "./firebase-config.js";
+import {
+  collection, query, orderBy, limit, onSnapshot, updateDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { renderNotices, unmountNotices } from "./notices.js";
 import { renderSuggestions, unmountSuggestions } from "./suggestions.js";
@@ -31,6 +35,38 @@ const SECTIONS = [
 // ── 상태 ────────────────────────────────────────────────
 let currentSection = null;
 let currentMe = null;
+
+const latestPostTime = {
+  notices: 0,
+  board: 0,
+  socoop: 0
+};
+
+// 최신 게시글 시간 감지
+function watchLatestPosts() {
+  const targets = [
+    { id: 'notices', col: 'notices' },
+    { id: 'board', col: 'board' },
+    { id: 'socoop', col: 'socoop_notices' }
+  ];
+  
+  targets.forEach(t => {
+    const q = query(collection(db, t.col), orderBy('createdAt', 'desc'), limit(1));
+    onSnapshot(q, snap => {
+      if (!snap.empty) {
+        const d = snap.docs[0].data();
+        if (d.createdAt) {
+          latestPostTime[t.id] = d.createdAt.toMillis ? d.createdAt.toMillis() : Date.parse(d.createdAt) || Date.now();
+          // 홈 화면이면 다시 그리기
+          if (currentMe && !currentSection) {
+            buildHomeScreen(currentMe);
+          }
+        }
+      }
+    });
+  });
+}
+watchLatestPosts();
 
 // ── DOM 참조 ────────────────────────────────────────────
 const authOverlay = document.getElementById('auth-overlay');
@@ -78,6 +114,20 @@ function showHome() {
 
 // ── 섹션 열기 ────────────────────────────────────
 function openSection(id) {
+  const sec = SECTIONS.find(s => s.id === id);
+  if (!sec || !currentMe) return;
+
+  // 새글 알림(N 뱃지) 읽음 처리
+  if (['notices', 'board', 'socoop'].includes(id)) {
+    try {
+      updateDoc(doc(db, 'users', currentMe.uid), {
+        [`lastRead.${id}`]: Date.now()
+      });
+    } catch(e) {
+      console.error('읽음 처리 실패:', e);
+    }
+  }
+
   if (currentSection) {
     const prev = SECTIONS.find(s => s.id === currentSection);
     if (prev) prev.unmount();
@@ -89,9 +139,6 @@ function openSection(id) {
   homeScreen.classList.add('hidden');
   tabContent.innerHTML = '';
   tabContent.classList.remove('hidden');
-
-  const sec = SECTIONS.find(s => s.id === id);
-  if (!sec) return;
 
   backBtn.classList.remove('hidden');
   headerLogo.style.display = 'none';
@@ -169,6 +216,18 @@ function buildHomeScreen(me) {
     card.className = 'home-card';
     card.style.background = sec.color;
     card.setAttribute('aria-label', sec.label);
+
+    // N 배지 렌더링
+    if (['notices', 'board', 'socoop'].includes(sec.id)) {
+      const myLastRead = me.lastRead?.[sec.id] || 0;
+      const latestTime = latestPostTime[sec.id] || 0;
+      if (latestTime > myLastRead) {
+        const badge = document.createElement('div');
+        badge.className = 'new-badge';
+        badge.textContent = 'N';
+        card.appendChild(badge);
+      }
+    }
 
     const iconEl = document.createElement('span');
     iconEl.className = 'home-card-icon';
