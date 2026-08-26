@@ -1,0 +1,18 @@
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+node_modules/
+.vercel/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

@@ -1,0 +1,129 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function myDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myRole() {
+      return isSignedIn() ? myDoc().data.role : null;
+    }
+
+    function isApproved() {
+      return isSignedIn() && myDoc().data.status == 'approved';
+    }
+
+    function isAdmin() {
+      return isSignedIn() && myRole() in ['president', 'vice_president'];
+    }
+
+    function isDeptHead() {
+      return isSignedIn() && myRole() == 'department_head';
+    }
+
+    function managesClub(clubId) {
+      return isSignedIn() && clubId in myDoc().data.managedClubIds;
+    }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if isSignedIn()
+                    && request.auth.uid == uid
+                    && request.resource.data.role == 'student'
+                    && request.resource.data.status == 'pending';
+      allow update: if isAdmin()
+                    || (isSignedIn() && request.auth.uid == uid
+                        && request.resource.data.role == resource.data.role
+                        && request.resource.data.status == resource.data.status
+                        && request.resource.data.department == resource.data.department);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- departments ----------
+    match /departments/{deptId} {
+      allow read: if isApproved();
+      allow write: if isAdmin();
+    }
+
+    // ---------- notices ----------
+    match /notices/{noticeId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && (isAdmin() || isDeptHead());
+      allow update, delete: if isAdmin() || (isDeptHead() && resource.data.authorUid == request.auth.uid);
+    }
+
+    // ---------- suggestions ----------
+    match /suggestions/{sugId} {
+      allow create: if isApproved() && request.resource.data.submitterUid == request.auth.uid;
+      allow read: if isApproved()
+                  && (resource.data.submitterUid == request.auth.uid
+                      || isAdmin()
+                      || (isDeptHead() && resource.data.departmentId == myDoc().data.department));
+      allow update: if isApproved() && (isAdmin() || (isDeptHead() && resource.data.departmentId == myDoc().data.department));
+      allow delete: if isAdmin();
+    }
+
+    // ---------- anonymous board ----------
+    match /posts/{postId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isAdmin() || resource.data.authorUid == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if isApproved();
+        allow create: if isApproved() && request.resource.data.authorUid == request.auth.uid;
+        allow update, delete: if isAdmin() || resource.data.authorUid == request.auth.uid;
+      }
+    }
+
+    // ---------- calendar events ----------
+    match /calendarEvents/{eventId} {
+      allow read: if isApproved();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---------- club requests ----------
+    match /clubRequests/{reqId} {
+      allow create: if isApproved() && request.resource.data.requesterUid == request.auth.uid;
+      allow read: if isApproved() && (resource.data.requesterUid == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ---------- clubs ----------
+    match /clubs/{clubId} {
+      allow read: if isApproved();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || managesClub(clubId);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- polls ----------
+    match /polls/{pollId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && (isAdmin() || isDeptHead());
+      allow update: if isApproved() && (isAdmin() || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin();
+
+      match /votes/{uid} {
+        allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+        allow create: if isApproved() && request.auth.uid == uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // ---------- faqs ----------
+    match /faqs/{faqId} {
+      allow read: if isApproved();
+      allow create: if isApproved() && (isAdmin() || isDeptHead());
+      allow update, delete: if isAdmin() || resource.data.createdBy == request.auth.uid;
+    }
+  }
+}
