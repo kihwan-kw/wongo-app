@@ -60,11 +60,17 @@ function buildMealView(container) {
     dates.forEach((date, i) => {
       const ymd  = toYMD(date);
       const menu = mealMap[ymd];
+      
+      const menuContainer = el('div', { class: 'meal-card-menu' });
+      if (menu) {
+        menuContainer.innerHTML = menu; // 나이스 API의 <br/> 태그 처리
+      } else {
+        menuContainer.appendChild(el('span', { class: 'text-muted text-sm' }, '급식 없음'));
+      }
+
       const card = el('div', { class: 'meal-card' },
         el('div', { class: 'meal-card-date' }, `${date.getMonth()+1}/${date.getDate()} (${dayNames[i]})`),
-        el('div', { class: 'meal-card-menu' },
-          menu ? menu : el('span', { class: 'text-muted text-sm' }, '급식 없음')
-        ),
+        menuContainer
       );
       grid.appendChild(card);
     });
@@ -76,12 +82,28 @@ function buildMealView(container) {
   });
 }
 
+// 나이스 API 설정 (원주고등학교)
+const NEIS_API_KEY = ''; // 발급받은 키가 있다면 여기에 넣으세요. (없어도 조회는 가능합니다)
+const ATPT_OFCDC_SC_CODE = 'K10'; // 강원특별자치도교육청
+const SD_SCHUL_CODE = '7801164'; // 원주고등학교
+
 async function fetchMeal(from, to) {
-  const res = await fetch(`/api/meal?from=${from}&to=${to}`);
+  let url = `https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${ATPT_OFCDC_SC_CODE}&SD_SCHUL_CODE=${SD_SCHUL_CODE}&MLSV_FROM_YMD=${from}&MLSV_TO_YMD=${to}`;
+  if (NEIS_API_KEY) {
+    url += `&KEY=${NEIS_API_KEY}`;
+  }
+
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  // data.meals: [{ date: 'YYYYMMDD', menu: '...' }]
+  
   const map = {};
-  (data.meals || []).forEach(m => { map[m.date] = m.menu; });
+  if (data.mealServiceDietInfo && data.mealServiceDietInfo[1].row) {
+    data.mealServiceDietInfo[1].row.forEach(m => {
+      // 메뉴 데이터 정리 (가독성을 위해 알레르기 번호 제거)
+      let menu = m.DDISH_NM.replace(/\([\d\.]+\)/g, '');
+      map[m.MLSV_YMD] = menu;
+    });
+  }
   return map;
 }
