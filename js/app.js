@@ -52,8 +52,8 @@ function showScreen(screen) {
   if (screen === 'app')     appEl.classList.remove('hidden');
 }
 
-// ── 홈 화면으로 이동 ────────────────────────────────────
-function showHome() {
+// ── 홈 UI 적용 (순수 UI, 히스토리 조작 없음) ────────────
+function _applyHomeUI() {
   if (currentSection) {
     const prev = SECTIONS.find(s => s.id === currentSection);
     if (prev) prev.unmount();
@@ -62,20 +62,27 @@ function showHome() {
   tabContent.innerHTML = '';
   tabContent.classList.add('hidden');
   homeScreen.classList.remove('hidden');
-
-  // 헤더 복원
   backBtn.classList.add('hidden');
   headerLogo.style.display = '';
   headerTitle.textContent = '원주고 앱';
 }
 
-// ── 섹션 열기 ────────────────────────────────────────────
+// ── 홈 화면으로 이동 (헤더 뒤로가기 버튼 전용) ───────
+function showHome() {
+  if (currentSection) {
+    history.back();
+  }
+}
+
+// ── 섹션 열기 ────────────────────────────────────
 function openSection(id) {
   if (currentSection) {
     const prev = SECTIONS.find(s => s.id === currentSection);
     if (prev) prev.unmount();
   }
   currentSection = id;
+
+  history.pushState({ section: id }, '');
 
   homeScreen.classList.add('hidden');
   tabContent.innerHTML = '';
@@ -84,7 +91,6 @@ function openSection(id) {
   const sec = SECTIONS.find(s => s.id === id);
   if (!sec) return;
 
-  // 헤더: 뒤로가기 + 섹션 이름
   backBtn.classList.remove('hidden');
   headerLogo.style.display = 'none';
   headerTitle.textContent = `${sec.icon} ${sec.label}`;
@@ -171,18 +177,31 @@ function handleAuthState(me) {
 
   // approved
   showScreen('app');
+  // 앱 진입 시 홈 상태를 히스토리에 기록 (브라우저 이전 페이지로 나가는 것 방지)
+  history.replaceState({ section: null }, '');
   buildHomeScreen(me);
 
   // 현재 섹션이 유효하면 유지, 아니면 홈으로
   if (currentSection && SECTIONS.find(s => s.id === currentSection && s.visible(me))) {
     openSection(currentSection);
   } else {
-    showHome();
+    _applyHomeUI(); // 히스토리 조작 없이 UI만 홈으로
   }
 }
 
+// ── 헤더 뒤로가기 버튼 → history.back() → popstate ──────
+backBtn.addEventListener('click', () => {
+  if (currentSection) history.back();
+});
+
+// ── Android / 브라우저 뒤로가기 버튼 (popstate) ───────────
+window.addEventListener('popstate', () => {
+  if (currentSection) {
+    _applyHomeUI();
+  }
+});
+
 // ── 앱 시작 ─────────────────────────────────────────────
-backBtn.addEventListener('click', showHome);
 initAuth(handleAuthState);
 document.getElementById('logout-btn').addEventListener('click', handleLogout);
 document.getElementById('pending-logout-btn').addEventListener('click', handleLogout);
