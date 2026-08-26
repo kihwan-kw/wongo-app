@@ -110,18 +110,29 @@ function buildHomeScreen(me) {
   greeting.className = 'home-greeting';
   const role = ROLE_LABEL[me.role] || '';
   greeting.innerHTML = `
-    <p class="home-greeting-sub">원주고등학교 · ${role}</p>
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:1;">
-      <p class="home-greeting-name">${me.name}님, 안녕하세요! 👋</p>
-      <div id="violation-badge" style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:600; display:flex; align-items:center; gap:4px; margin-bottom: 2px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; position:relative; z-index:1;">
+      <p class="home-greeting-sub" style="margin-bottom:0;">원주고등학교 · ${role}</p>
+      <div id="violation-badge" style="background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:12px; font-size:0.8rem; font-weight:700; display:flex; align-items:center; gap:4px; white-space:nowrap;">
         <span style="font-size:0.9rem">🚨</span> 조회 중...
       </div>
+    </div>
+    <div style="position:relative; z-index:1;">
+      <p class="home-greeting-name" style="word-break:keep-all;">${me.name}님,<br/>안녕하세요! 👋</p>
     </div>
   `;
   homeScreen.appendChild(greeting);
 
   // 구글 앱스 스크립트에서 위반 횟수 가져오기
-  if (GAS_API_URL && GAS_API_URL.startsWith('http')) {
+  if (me.email === 'test123@test.com') {
+    // 💡 테스트 계정일 경우 화면을 확인하기 위해 가짜 데이터를 띄워줍니다.
+    setTimeout(() => {
+      const badge = document.getElementById('violation-badge');
+      if (badge) {
+        badge.innerHTML = `<span style="font-size:0.9rem">🚨</span> 누적 위반: 3회 (테스트)`;
+        badge.style.background = 'rgba(239,68,68,0.9)'; 
+      }
+    }, 500);
+  } else if (GAS_API_URL && GAS_API_URL.startsWith('http')) {
     const url = `${GAS_API_URL}?action=getViolationCount&studentName=${encodeURIComponent(me.name)}&grade=${me.grade}&classNum=${me.classNum}`;
     fetch(url)
       .then(res => res.json())
