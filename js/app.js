@@ -3,42 +3,42 @@
 import { initAuth, handleLogout } from "./auth.js";
 import { isAdminRole, ROLE_LABEL } from "./utils.js";
 
-import { renderNotices,    unmountNotices    } from "./notices.js";
-import { renderSuggestions,unmountSuggestions} from "./suggestions.js";
-import { renderBoard,      unmountBoard      } from "./board.js";
-import { renderMeal,       unmountMeal       } from "./meal.js";
-import { renderSchedule,   unmountSchedule   } from "./schedule.js";
-import { renderClubs,      unmountClubs      } from "./clubs.js";
-import { renderPolls,      unmountPolls      } from "./polls.js";
-import { renderFaq,        unmountFaq        } from "./faq.js";
-import { renderAdmin,      unmountAdmin      } from "./admin.js";
+import { renderNotices, unmountNotices } from "./notices.js";
+import { renderSuggestions, unmountSuggestions } from "./suggestions.js";
+import { renderBoard, unmountBoard } from "./board.js";
+import { renderMeal, unmountMeal } from "./meal.js";
+import { renderSchedule, unmountSchedule } from "./schedule.js";
+import { renderClubs, unmountClubs } from "./clubs.js";
+import { renderPolls, unmountPolls } from "./polls.js";
+import { renderFaq, unmountFaq } from "./faq.js";
+import { renderAdmin, unmountAdmin } from "./admin.js";
 
 // ── 섹션 정의 (아이콘 · 색상 · 렌더러) ─────────────────
 const SECTIONS = [
-  { id: 'notices',     icon: '📢', label: '공지사항',  color: 'linear-gradient(145deg,#BFDBFE,#93C5FD)', mount: renderNotices,     unmount: unmountNotices,     visible: () => true },
-  { id: 'suggestions', icon: '📬', label: '건의함',    color: 'linear-gradient(145deg,#DDD6FE,#C4B5FD)', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
-  { id: 'board',       icon: '💬', label: '익명게시판', color: 'linear-gradient(145deg,#FED7AA,#FDBA74)', mount: renderBoard,       unmount: unmountBoard,       visible: () => true },
-  { id: 'meal',        icon: '🍱', label: '급식',      color: 'linear-gradient(145deg,#A7F3D0,#6EE7B7)', mount: renderMeal,        unmount: unmountMeal,        visible: () => true },
-  { id: 'schedule',    icon: '📅', label: '학사일정',  color: 'linear-gradient(145deg,#C7D2FE,#A5B4FC)', mount: renderSchedule,    unmount: unmountSchedule,    visible: () => true },
-  { id: 'clubs',       icon: '🎯', label: '동아리',    color: 'linear-gradient(145deg,#FDE68A,#FCD34D)', mount: renderClubs,       unmount: unmountClubs,       visible: () => true },
-  { id: 'polls',       icon: '📊', label: '설문/투표', color: 'linear-gradient(145deg,#A5F3FC,#67E8F9)', mount: renderPolls,       unmount: unmountPolls,       visible: () => true },
-  { id: 'faq',         icon: '❓', label: 'FAQ',       color: 'linear-gradient(145deg,#FBCFE8,#F9A8D4)', mount: renderFaq,         unmount: unmountFaq,         visible: () => true },
-  { id: 'admin',       icon: '⚙️', label: '관리자',    color: 'linear-gradient(145deg,#E2E8F0,#CBD5E1)', mount: renderAdmin,       unmount: unmountAdmin,       visible: (me) => isAdminRole(me?.role) },
+  { id: 'notices', icon: '📢', label: '공지사항', color: 'linear-gradient(145deg,#BFDBFE,#93C5FD)', mount: renderNotices, unmount: unmountNotices, visible: () => true },
+  { id: 'suggestions', icon: '📬', label: '건의함', color: 'linear-gradient(145deg,#DDD6FE,#C4B5FD)', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
+  { id: 'board', icon: '💬', label: '익명게시판', color: 'linear-gradient(145deg,#FED7AA,#FDBA74)', mount: renderBoard, unmount: unmountBoard, visible: () => true },
+  { id: 'meal', icon: '🍱', label: '급식', color: 'linear-gradient(145deg,#A7F3D0,#6EE7B7)', mount: renderMeal, unmount: unmountMeal, visible: () => true },
+  { id: 'schedule', icon: '📅', label: '학사일정', color: 'linear-gradient(145deg,#C7D2FE,#A5B4FC)', mount: renderSchedule, unmount: unmountSchedule, visible: () => true },
+  { id: 'clubs', icon: '🎯', label: '동아리', color: 'linear-gradient(145deg,#FDE68A,#FCD34D)', mount: renderClubs, unmount: unmountClubs, visible: () => true },
+  { id: 'polls', icon: '📊', label: '설문/투표', color: 'linear-gradient(145deg,#A5F3FC,#67E8F9)', mount: renderPolls, unmount: unmountPolls, visible: () => true },
+  { id: 'faq', icon: '❓', label: 'FAQ', color: 'linear-gradient(145deg,#FBCFE8,#F9A8D4)', mount: renderFaq, unmount: unmountFaq, visible: () => true },
+  { id: 'admin', icon: '⚙️', label: '관리자', color: 'linear-gradient(145deg,#E2E8F0,#CBD5E1)', mount: renderAdmin, unmount: unmountAdmin, visible: (me) => isAdminRole(me?.role) },
 ];
 
 // ── 상태 ────────────────────────────────────────────────
 let currentSection = null;
-let currentMe      = null;
+let currentMe = null;
 
 // ── DOM 참조 ────────────────────────────────────────────
-const authOverlay    = document.getElementById('auth-overlay');
-const pendingScreen  = document.getElementById('pending-screen');
-const appEl          = document.getElementById('app');
-const homeScreen     = document.getElementById('home-screen');
-const tabContent     = document.getElementById('tab-content');
-const backBtn        = document.getElementById('back-btn');
-const headerLogo     = document.getElementById('header-logo');
-const headerTitle    = document.getElementById('header-title');
+const authOverlay = document.getElementById('auth-overlay');
+const pendingScreen = document.getElementById('pending-screen');
+const appEl = document.getElementById('app');
+const homeScreen = document.getElementById('home-screen');
+const tabContent = document.getElementById('tab-content');
+const backBtn = document.getElementById('back-btn');
+const headerLogo = document.getElementById('header-logo');
+const headerTitle = document.getElementById('header-title');
 const headerUserInfo = document.getElementById('header-user-info');
 
 // ── 화면 전환 (auth / pending / app) ───────────────────
@@ -47,9 +47,9 @@ function showScreen(screen) {
   pendingScreen.classList.add('hidden');
   appEl.classList.add('hidden');
 
-  if (screen === 'auth')    authOverlay.classList.remove('hidden');
+  if (screen === 'auth') authOverlay.classList.remove('hidden');
   if (screen === 'pending') pendingScreen.classList.remove('hidden');
-  if (screen === 'app')     appEl.classList.remove('hidden');
+  if (screen === 'app') appEl.classList.remove('hidden');
 }
 
 // ── 홈 UI 적용 (순수 UI, 히스토리 조작 없음) ────────────
@@ -98,19 +98,52 @@ function openSection(id) {
   sec.mount(tabContent, currentMe);
 }
 
+// ── 구글 앱스 스크립트 연동 URL (배포 후 변경) ─────────
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwlwLbjHj7yqPh0GFQAC0C2ZRRyfsstoUo3Vi-9YqpHL6I7WR6EBvZL0VnVDXEke0kmrw/exec';
+
 // ── 홈 화면 빌드 (카드 그리드) ─────────────────────────
 function buildHomeScreen(me) {
   homeScreen.innerHTML = '';
 
-  // 인사말 배너
+  // 인사말 배너 + 위반 횟수
   const greeting = document.createElement('div');
   greeting.className = 'home-greeting';
   const role = ROLE_LABEL[me.role] || '';
   greeting.innerHTML = `
     <p class="home-greeting-sub">원주고등학교 · ${role}</p>
-    <p class="home-greeting-name">${me.name}님, 안녕하세요! 👋</p>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end; position:relative; z-index:1;">
+      <p class="home-greeting-name">${me.name}님, 안녕하세요! 👋</p>
+      <div id="violation-badge" style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:600; display:flex; align-items:center; gap:4px; margin-bottom: 2px;">
+        <span style="font-size:0.9rem">🚨</span> 조회 중...
+      </div>
+    </div>
   `;
   homeScreen.appendChild(greeting);
+
+  // 구글 앱스 스크립트에서 위반 횟수 가져오기
+  if (GAS_API_URL && GAS_API_URL.startsWith('http')) {
+    const url = `${GAS_API_URL}?action=getViolationCount&studentName=${encodeURIComponent(me.name)}&grade=${me.grade}&classNum=${me.classNum}`;
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const badge = document.getElementById('violation-badge');
+        if (badge) {
+          badge.innerHTML = `<span style="font-size:0.9rem">🚨</span> 누적 위반: ${data.total || 0}회`;
+          if (data.total > 0) {
+            badge.style.background = 'rgba(239,68,68,0.9)'; // 빨간색 알림
+          }
+        }
+      })
+      .catch(err => {
+        console.error('위반 횟수 조회 실패:', err);
+        const badge = document.getElementById('violation-badge');
+        if (badge) badge.style.display = 'none';
+      });
+  } else {
+    // API URL이 설정되지 않은 경우 배지 숨김
+    const badge = document.getElementById('violation-badge');
+    if (badge) badge.style.display = 'none';
+  }
 
   // 카드 그리드
   const grid = document.createElement('div');
