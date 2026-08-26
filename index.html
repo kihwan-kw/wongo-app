@@ -97,8 +97,9 @@
     <!-- Top Header -->
     <header class="app-header">
       <div class="header-left">
-        <span class="header-logo">🏫</span>
-        <span class="header-title">원주고 앱</span>
+        <button id="back-btn" class="btn-back hidden">&#8249; 뒤로</button>
+        <span class="header-logo" id="header-logo">🏫</span>
+        <span class="header-title" id="header-title">원주고 앱</span>
       </div>
       <div class="header-right">
         <span id="header-user-info" class="header-user"></span>
@@ -106,15 +107,11 @@
       </div>
     </header>
 
-    <!-- Tab Navigation -->
-    <nav class="tab-nav" id="tab-nav" role="tablist" aria-label="메뉴">
-      <!-- Tabs inserted by app.js -->
-    </nav>
+    <!-- Home Screen (card grid) -->
+    <div id="home-screen" class="home-screen"></div>
 
-    <!-- Tab Content -->
-    <main class="tab-content" id="tab-content" role="main">
-      <!-- Content inserted by tab modules -->
-    </main>
+    <!-- Section Content -->
+    <main class="tab-content hidden" id="tab-content" role="main"></main>
   </div>
 
   <!-- ───────────── TOAST ───────────── -->

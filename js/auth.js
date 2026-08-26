@@ -156,8 +156,6 @@ export function initAuth(onUser) {
   document.getElementById('login-form').addEventListener('submit', handleLogin);
   document.getElementById('show-signup').addEventListener('click', showSignup);
   document.getElementById('show-login').addEventListener('click', showLogin);
-  document.getElementById('logout-btn').addEventListener('click', handleLogout);
-  document.getElementById('pending-logout-btn').addEventListener('click', handleLogout);
 
   // 테스트 계정 빠른 로그인
   document.getElementById('test-login-btn').addEventListener('click', async () => {
@@ -194,3 +192,4 @@ export function initAuth(onUser) {
     }
   });
 }
+

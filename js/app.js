@@ -1,4 +1,4 @@
-// js/app.js — 탭 라우터 & 앱 진입점
+// js/app.js — 홈 카드 그리드 & 섹션 라우터
 
 import { initAuth, handleLogout } from "./auth.js";
 import { isAdminRole, ROLE_LABEL } from "./utils.js";
@@ -13,31 +13,35 @@ import { renderPolls,      unmountPolls      } from "./polls.js";
 import { renderFaq,        unmountFaq        } from "./faq.js";
 import { renderAdmin,      unmountAdmin      } from "./admin.js";
 
-// ── 탭 정의 ─────────────────────────────────────────────
-const TABS = [
-  { id: 'notices',     icon: '📢', label: '공지',   mount: renderNotices,     unmount: unmountNotices,     visible: () => true },
-  { id: 'suggestions', icon: '📬', label: '건의함', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
-  { id: 'board',       icon: '💬', label: '익명',   mount: renderBoard,       unmount: unmountBoard,       visible: () => true },
-  { id: 'meal',        icon: '🍱', label: '급식',   mount: renderMeal,        unmount: unmountMeal,        visible: () => true },
-  { id: 'schedule',    icon: '📅', label: '학사일정', mount: renderSchedule,    unmount: unmountSchedule,    visible: () => true },
-  { id: 'clubs',       icon: '🎯', label: '동아리', mount: renderClubs,       unmount: unmountClubs,       visible: () => true },
-  { id: 'polls',       icon: '📊', label: '설문',   mount: renderPolls,       unmount: unmountPolls,       visible: () => true },
-  { id: 'faq',         icon: '❓',  label: 'FAQ',    mount: renderFaq,         unmount: unmountFaq,         visible: () => true },
-  { id: 'admin',       icon: '⚙️', label: '관리자', mount: renderAdmin,       unmount: unmountAdmin,       visible: (me) => isAdminRole(me?.role) },
+// ── 섹션 정의 (아이콘 · 색상 · 렌더러) ─────────────────
+const SECTIONS = [
+  { id: 'notices',     icon: '📢', label: '공지사항',  color: 'linear-gradient(135deg,#3B82F6,#1D4ED8)', mount: renderNotices,     unmount: unmountNotices,     visible: () => true },
+  { id: 'suggestions', icon: '📬', label: '건의함',    color: 'linear-gradient(135deg,#8B5CF6,#6D28D9)', mount: renderSuggestions, unmount: unmountSuggestions, visible: () => true },
+  { id: 'board',       icon: '💬', label: '익명게시판', color: 'linear-gradient(135deg,#F97316,#EA580C)', mount: renderBoard,       unmount: unmountBoard,       visible: () => true },
+  { id: 'meal',        icon: '🍱', label: '급식',      color: 'linear-gradient(135deg,#10B981,#059669)', mount: renderMeal,        unmount: unmountMeal,        visible: () => true },
+  { id: 'schedule',    icon: '📅', label: '학사일정',  color: 'linear-gradient(135deg,#6366F1,#4F46E5)', mount: renderSchedule,    unmount: unmountSchedule,    visible: () => true },
+  { id: 'clubs',       icon: '🎯', label: '동아리',    color: 'linear-gradient(135deg,#F59E0B,#D97706)', mount: renderClubs,       unmount: unmountClubs,       visible: () => true },
+  { id: 'polls',       icon: '📊', label: '설문/투표', color: 'linear-gradient(135deg,#06B6D4,#0891B2)', mount: renderPolls,       unmount: unmountPolls,       visible: () => true },
+  { id: 'faq',         icon: '❓', label: 'FAQ',       color: 'linear-gradient(135deg,#EC4899,#DB2777)', mount: renderFaq,         unmount: unmountFaq,         visible: () => true },
+  { id: 'admin',       icon: '⚙️', label: '관리자',    color: 'linear-gradient(135deg,#64748B,#475569)', mount: renderAdmin,       unmount: unmountAdmin,       visible: (me) => isAdminRole(me?.role) },
 ];
 
 // ── 상태 ────────────────────────────────────────────────
-let currentTab    = null;
-let currentMe     = null;
+let currentSection = null;
+let currentMe      = null;
 
-// ── 화면 제어 ───────────────────────────────────────────
+// ── DOM 참조 ────────────────────────────────────────────
 const authOverlay    = document.getElementById('auth-overlay');
 const pendingScreen  = document.getElementById('pending-screen');
 const appEl          = document.getElementById('app');
-const tabNav         = document.getElementById('tab-nav');
+const homeScreen     = document.getElementById('home-screen');
 const tabContent     = document.getElementById('tab-content');
+const backBtn        = document.getElementById('back-btn');
+const headerLogo     = document.getElementById('header-logo');
+const headerTitle    = document.getElementById('header-title');
 const headerUserInfo = document.getElementById('header-user-info');
 
+// ── 화면 전환 (auth / pending / app) ───────────────────
 function showScreen(screen) {
   authOverlay.classList.add('hidden');
   pendingScreen.classList.add('hidden');
@@ -48,69 +52,104 @@ function showScreen(screen) {
   if (screen === 'app')     appEl.classList.remove('hidden');
 }
 
-// ── 탭 전환 ─────────────────────────────────────────────
-function switchTab(id) {
-  // 현재 탭 unmount
-  if (currentTab) {
-    const prev = TABS.find(t => t.id === currentTab);
+// ── 홈 화면으로 이동 ────────────────────────────────────
+function showHome() {
+  if (currentSection) {
+    const prev = SECTIONS.find(s => s.id === currentSection);
     if (prev) prev.unmount();
-    const prevBtn = tabNav.querySelector(`[data-tab="${currentTab}"]`);
-    if (prevBtn) prevBtn.classList.remove('active');
+    currentSection = null;
   }
-
-  // 새 탭 mount
   tabContent.innerHTML = '';
-  currentTab = id;
+  tabContent.classList.add('hidden');
+  homeScreen.classList.remove('hidden');
 
-  const tab = TABS.find(t => t.id === id);
-  if (!tab) return;
-
-  const btn = tabNav.querySelector(`[data-tab="${id}"]`);
-  if (btn) {
-    btn.classList.add('active');
-    btn.scrollIntoView({ inline: 'nearest', behavior: 'smooth' });
-  }
-
-  tab.mount(tabContent, currentMe);
+  // 헤더 복원
+  backBtn.classList.add('hidden');
+  headerLogo.style.display = '';
+  headerTitle.textContent = '원주고 앱';
 }
 
-// ── 탭 네비게이션 구성 ──────────────────────────────────
-function buildNav(me) {
-  tabNav.innerHTML = '';
-  TABS.forEach(tab => {
-    if (!tab.visible(me)) return;
-    const btn = document.createElement('button');
-    btn.className = 'tab-btn';
-    btn.dataset.tab = tab.id;
-    btn.setAttribute('role', 'tab');
-    btn.setAttribute('aria-selected', 'false');
-    // 이모지 span + 텍스트 span 세로 배치
+// ── 섹션 열기 ────────────────────────────────────────────
+function openSection(id) {
+  if (currentSection) {
+    const prev = SECTIONS.find(s => s.id === currentSection);
+    if (prev) prev.unmount();
+  }
+  currentSection = id;
+
+  homeScreen.classList.add('hidden');
+  tabContent.innerHTML = '';
+  tabContent.classList.remove('hidden');
+
+  const sec = SECTIONS.find(s => s.id === id);
+  if (!sec) return;
+
+  // 헤더: 뒤로가기 + 섹션 이름
+  backBtn.classList.remove('hidden');
+  headerLogo.style.display = 'none';
+  headerTitle.textContent = `${sec.icon} ${sec.label}`;
+
+  sec.mount(tabContent, currentMe);
+}
+
+// ── 홈 화면 빌드 (카드 그리드) ─────────────────────────
+function buildHomeScreen(me) {
+  homeScreen.innerHTML = '';
+
+  // 인사말 배너
+  const greeting = document.createElement('div');
+  greeting.className = 'home-greeting';
+  const role = ROLE_LABEL[me.role] || '';
+  greeting.innerHTML = `
+    <p class="home-greeting-sub">원주고등학교 · ${role}</p>
+    <p class="home-greeting-name">${me.name}님, 안녕하세요! 👋</p>
+  `;
+  homeScreen.appendChild(greeting);
+
+  // 카드 그리드
+  const grid = document.createElement('div');
+  grid.className = 'home-grid';
+
+  SECTIONS.forEach(sec => {
+    if (!sec.visible(me)) return;
+
+    const card = document.createElement('button');
+    card.className = 'home-card';
+    card.style.background = sec.color;
+    card.setAttribute('aria-label', sec.label);
+
     const iconEl = document.createElement('span');
-    iconEl.className = 'tab-icon';
-    iconEl.textContent = tab.icon;
+    iconEl.className = 'home-card-icon';
+    iconEl.textContent = sec.icon;
+
     const labelEl = document.createElement('span');
-    labelEl.className = 'tab-label';
-    labelEl.textContent = tab.label;
-    btn.appendChild(iconEl);
-    btn.appendChild(labelEl);
-    btn.addEventListener('click', () => switchTab(tab.id));
-    tabNav.appendChild(btn);
+    labelEl.className = 'home-card-label';
+    labelEl.textContent = sec.label;
+
+    card.appendChild(iconEl);
+    card.appendChild(labelEl);
+    card.addEventListener('click', () => openSection(sec.id));
+    grid.appendChild(card);
   });
+
+  homeScreen.appendChild(grid);
 }
 
 // ── 헤더 사용자 정보 ────────────────────────────────────
 function updateHeaderUser(me) {
   if (!me) { headerUserInfo.textContent = ''; return; }
-  const roleLabel = ROLE_LABEL[me.role] || '';
-  headerUserInfo.textContent = `${me.name} (${me.grade}학년 ${me.classNum}반 | ${roleLabel})`;
+  // 모바일에서 짧게 표시
+  headerUserInfo.textContent = `${me.name}`;
 }
 
 // ── 인증 상태 처리 ──────────────────────────────────────
 function handleAuthState(me) {
   if (!me) {
     currentMe = null;
-    currentTab && TABS.find(t => t.id === currentTab)?.unmount();
-    currentTab = null;
+    if (currentSection) {
+      SECTIONS.find(s => s.id === currentSection)?.unmount();
+      currentSection = null;
+    }
     showScreen('auth');
     return;
   }
@@ -125,7 +164,6 @@ function handleAuthState(me) {
 
   if (me.status === 'rejected') {
     showScreen('auth');
-    // 거절 메시지는 auth 화면에 표시할 수 있지만 간단히 alert 사용
     alert('가입 신청이 거절되었습니다. 학생자치회에 문의해주세요.');
     handleLogout();
     return;
@@ -133,17 +171,18 @@ function handleAuthState(me) {
 
   // approved
   showScreen('app');
-  buildNav(me);
+  buildHomeScreen(me);
 
-  // 현재 탭 유지하거나 첫 탭으로
-  const firstTab = TABS.find(t => t.visible(me));
-  if (!currentTab || !TABS.find(t => t.id === currentTab && t.visible(me))) {
-    switchTab(firstTab?.id || 'notices');
+  // 현재 섹션이 유효하면 유지, 아니면 홈으로
+  if (currentSection && SECTIONS.find(s => s.id === currentSection && s.visible(me))) {
+    openSection(currentSection);
   } else {
-    // 역할이 바뀐 경우 탭 재렌더
-    switchTab(currentTab);
+    showHome();
   }
 }
 
 // ── 앱 시작 ─────────────────────────────────────────────
+backBtn.addEventListener('click', showHome);
 initAuth(handleAuthState);
+document.getElementById('logout-btn').addEventListener('click', handleLogout);
+document.getElementById('pending-logout-btn').addEventListener('click', handleLogout);
