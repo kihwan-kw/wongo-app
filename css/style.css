@@ -623,6 +623,12 @@ img { max-width: 100%; }
   padding: 14px;
   text-align: center;
 }
+.meal-card.today-meal {
+  border: 2px solid var(--primary);
+  background-color: rgba(59, 130, 246, 0.02);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+  transform: translateY(-2px);
+}
 .meal-card-date {
   font-size: .78rem;
   font-weight: 700;
@@ -630,6 +636,10 @@ img { max-width: 100%; }
   margin-bottom: 8px;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--border-light);
+}
+.meal-card.today-meal .meal-card-date {
+  color: var(--primary);
+  font-weight: 800;
 }
 .meal-card-menu { font-size: .85rem; line-height: 1.8; color: var(--text-secondary); }
 

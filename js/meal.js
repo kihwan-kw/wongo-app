@@ -57,9 +57,12 @@ function buildMealView(container) {
     spinner.remove();
 
     const dayNames = ['월','화','수','목','금'];
+    const todayYmd = toYMD(new Date());
+
     dates.forEach((date, i) => {
       const ymd  = toYMD(date);
       const menu = mealMap[ymd];
+      const isToday = (ymd === todayYmd);
       
       const menuContainer = el('div', { class: 'meal-card-menu' });
       if (menu) {
@@ -68,8 +71,10 @@ function buildMealView(container) {
         menuContainer.appendChild(el('span', { class: 'text-muted text-sm' }, '급식 없음'));
       }
 
-      const card = el('div', { class: 'meal-card' },
-        el('div', { class: 'meal-card-date' }, `${date.getMonth()+1}/${date.getDate()} (${dayNames[i]})`),
+      const card = el('div', { class: `meal-card ${isToday ? 'today-meal' : ''}` },
+        el('div', { class: 'meal-card-date' }, 
+          `${date.getMonth()+1}/${date.getDate()} (${dayNames[i]})` + (isToday ? ' - 오늘' : '')
+        ),
         menuContainer
       );
       grid.appendChild(card);
