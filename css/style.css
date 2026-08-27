@@ -814,6 +814,40 @@ img { max-width: 100%; }
 .option-input-row input { flex: 1; }
 .options-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 
+/* 다중 질문 뷰 */
+.poll-questions-wrap { padding: 0; }
+.poll-question-block {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-light);
+}
+.poll-question-block:first-child { border-top: none; }
+.poll-question-label {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+/* 다중 질문 에디터 (작성 폼) */
+.poll-question-editor {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 8px;
+}
+.poll-q-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.poll-q-num {
+  font-size: .85rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
 /* ── FAQ ─────────────────────────────────────────────── */
 .faq-search { margin-bottom: 16px; }
 .faq-search input {

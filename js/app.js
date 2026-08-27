@@ -254,9 +254,12 @@ function updateHeaderUser(me) {
 }
 
 // ── 인증 상태 처리 ──────────────────────────────────────
+let _appInitialized = false;
+
 function handleAuthState(me) {
   if (!me) {
     currentMe = null;
+    _appInitialized = false;
     if (currentSection) {
       SECTIONS.find(s => s.id === currentSection)?.unmount();
       currentSection = null;
@@ -265,10 +268,9 @@ function handleAuthState(me) {
     return;
   }
 
-  currentMe = me;
-  updateHeaderUser(me);
-
   if (me.status === 'pending') {
+    currentMe = me;
+    updateHeaderUser(me);
     showScreen('pending');
     return;
   }
@@ -280,9 +282,22 @@ function handleAuthState(me) {
     return;
   }
 
-  // approved
+  // approved — 이미 앱이 초기화된 경우(실시간 doc 업데이트)엔 currentMe만 갱신
+  const wasInitialized = _appInitialized;
+  currentMe = me;
+  updateHeaderUser(me);
+
+  if (wasInitialized) {
+    // lastRead 등 사용자 데이터가 바뀌었을 때 홈 화면의 N 배지만 갱신
+    if (!currentSection) {
+      buildHomeScreen(me);
+    }
+    return;
+  }
+
+  // 최초 진입
+  _appInitialized = true;
   showScreen('app');
-  // 앱 진입 시 홈 상태를 히스토리에 기록 (브라우저 이전 페이지로 나가는 것 방지)
   history.replaceState({ section: null }, '');
   buildHomeScreen(me);
 
@@ -290,7 +305,7 @@ function handleAuthState(me) {
   if (currentSection && SECTIONS.find(s => s.id === currentSection && s.visible(me))) {
     openSection(currentSection);
   } else {
-    _applyHomeUI(); // 히스토리 조작 없이 UI만 홈으로
+    _applyHomeUI();
   }
 }
 
