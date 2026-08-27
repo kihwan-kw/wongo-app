@@ -848,7 +848,107 @@ img { max-width: 100%; }
   color: var(--primary);
 }
 
-/* ── FAQ ─────────────────────────────────────────────── */
+/* ── Exams (시험범위) ──────────────────────────────── */
+.exam-tab-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.exam-tab-btn {
+  padding: 7px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.exam-tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+.exam-tab-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.grade-tab-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.grade-tab-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: var(--radius);
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-align: center;
+}
+.grade-tab-btn:hover { border-color: var(--primary); color: var(--primary); }
+.grade-tab-btn.active {
+  background: linear-gradient(135deg, #D9F99D, #86EFAC);
+  border-color: #4ADE80;
+  color: #15803D;
+}
+.exam-content-area {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  min-height: 200px;
+  padding: 16px;
+}
+.exam-editor-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.exam-view { width: 100%; }
+.exam-updated-at {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+.exam-content-text {
+  white-space: pre-wrap;
+  font-size: .9rem;
+  line-height: 1.9;
+  color: var(--text);
+  font-family: inherit;
+  margin: 0;
+}
+.exam-textarea {
+  width: 100%;
+  min-height: 280px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+  line-height: 1.8;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+.exam-textarea:focus { border-color: var(--primary); }
+.exam-empty-hint {
+  color: var(--text-muted);
+  font-size: .88rem;
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ── FAQ ──────────────────────────────────────────── */
 .faq-search { margin-bottom: 16px; }
 .faq-search input {
   width: 100%;

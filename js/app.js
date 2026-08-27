@@ -16,6 +16,7 @@ import { renderClubs, unmountClubs } from "./clubs.js";
 import { renderPolls, unmountPolls } from "./polls.js";
 import { renderFaq, unmountFaq } from "./faq.js";
 import { renderSocoop, unmountSocoop } from "./socoop.js";
+import { renderExams, unmountExams } from "./exams.js";
 import { renderAdmin, unmountAdmin } from "./admin.js";
 
 // ── 섹션 정의 (아이콘 · 색상 · 렌더러) ─────────────────
@@ -28,6 +29,7 @@ const SECTIONS = [
   { id: 'clubs', icon: '🎯', label: '동아리', color: 'linear-gradient(145deg,#FDE68A,#FCD34D)', mount: renderClubs, unmount: unmountClubs, visible: () => true },
   { id: 'polls', icon: '📊', label: '설문/투표', color: 'linear-gradient(145deg,#A5F3FC,#67E8F9)', mount: renderPolls, unmount: unmountPolls, visible: () => true },
   { id: 'socoop', icon: '🏪', label: '소쿱놀이(매점/카페)', color: 'linear-gradient(145deg,#FDA4AF,#FB7185)', mount: renderSocoop, unmount: unmountSocoop, visible: () => true },
+  { id: 'exams',  icon: '📝', label: '시험범위', color: 'linear-gradient(145deg,#D9F99D,#BEF264)', mount: renderExams, unmount: unmountExams, visible: () => true },
   { id: 'faq', icon: '❓', label: 'FAQ', color: 'linear-gradient(145deg,#FBCFE8,#F9A8D4)', mount: renderFaq, unmount: unmountFaq, visible: () => true },
   { id: 'admin', icon: '⚙️', label: '관리자', color: 'linear-gradient(145deg,#E2E8F0,#CBD5E1)', mount: renderAdmin, unmount: unmountAdmin, visible: (me) => isAdminRole(me?.role) },
 ];
