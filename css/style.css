@@ -565,9 +565,25 @@ img { max-width: 100%; }
 }
 .comment-author { font-weight: 600; font-size: .78rem; color: var(--text-secondary); margin-bottom: 2px; }
 .comment-text { color: var(--text); }
-.comment-input-row { display: flex; gap: 8px; }
-.comment-input-row input { flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: var(--radius); outline: none; transition: border-color var(--transition); }
+.comment-input-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.comment-input-row input {
+  flex: 1;
+  min-width: 0;          /* flex shrink 를 허용 */
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color var(--transition);
+}
 .comment-input-row input:focus { border-color: var(--primary); }
+.comment-input-row .btn {
+  white-space: nowrap;   /* 버튼 텍스트 줄바괬 방지 */
+  flex-shrink: 0;
+}
 
 /* ── Empty State ─────────────────────────────────────── */
 .empty-state {
