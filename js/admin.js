@@ -105,6 +105,9 @@ async function rejectUser(uid) {
 // 2. 동아리 신청 승인
 // ═══════════════════════════════════════════════════
 function renderClubRequests(container) {
+  // 기존 구독 정리 (renderAdmin이 여러 번 호출될 때 중복 방지)
+  if (unsubClubReqs) { unsubClubReqs(); unsubClubReqs = null; }
+
   const q = query(collection(db, 'clubRequests'), where('status', '==', 'pending'), orderBy('createdAt', 'asc'));
   unsubClubReqs = onSnapshot(q, snap => {
     container.innerHTML = '';
@@ -115,6 +118,14 @@ function renderClubRequests(container) {
     snap.forEach(ds => {
       const d = ds.data();
       const typeLabel = d.type === 'create' ? '신규 등록' : '정보 수정';
+      const btn = el('button', { class: 'btn btn-accent btn-sm' }, '승인');
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = '처리 중...';
+        await approveClubRequest(ds.id, d);
+        btn.disabled = false;
+        btn.textContent = '승인';
+      });
       container.appendChild(el('div', { class: 'approve-item' },
         el('div', { class: 'approve-item-info' },
           el('div', { class: 'approve-item-name' },
@@ -127,8 +138,8 @@ function renderClubRequests(container) {
           el('div', { class: 'text-sm text-secondary', style:{ marginTop:'4px' } }, d.description || ''),
         ),
         el('div', { class: 'approve-item-actions' },
-          el('button', { class: 'btn btn-accent btn-sm', onclick: () => approveClubRequest(ds.id, d) }, '승인'),
-          el('button', { class: 'btn btn-danger btn-sm',  onclick: () => rejectClubRequest(ds.id)    }, '거절'),
+          btn,
+          el('button', { class: 'btn btn-danger btn-sm', onclick: () => rejectClubRequest(ds.id) }, '거절'),
         ),
       ));
     });
@@ -140,7 +151,17 @@ function renderClubRequests(container) {
 
 async function approveClubRequest(reqId, reqData) {
   try {
+    // 중복 승인 방지: 현재 상태 확인
+    const reqSnap = await getDoc(doc(db, 'clubRequests', reqId));
+    if (!reqSnap.exists() || reqSnap.data().status !== 'pending') {
+      toast('이미 처리된 신청입니다.', 'warning');
+      return;
+    }
+
     if (reqData.type === 'create') {
+      // 미리 status를 상태를 processing으로 바꾸어 중복 승인 차단
+      await updateDoc(doc(db, 'clubRequests', reqId), { status: 'processing' });
+
       // 새 clubs 문서 생성
       const newClubRef = await addDoc(collection(db, 'clubs'), {
         name:          reqData.name,
@@ -153,6 +174,7 @@ async function approveClubRequest(reqId, reqData) {
         createdAt:     serverTimestamp(),
         updatedAt:     serverTimestamp(),
       });
+
       // 신청자 managedClubIds에 추가
       const userSnap = await getDoc(doc(db, 'users', reqData.requesterUid));
       if (userSnap.exists()) {
@@ -163,6 +185,10 @@ async function approveClubRequest(reqId, reqData) {
           });
         }
       }
+
+      // 최종 approved + 생성된 clubId 기록
+      await updateDoc(doc(db, 'clubRequests', reqId), { status: 'approved', clubId: newClubRef.id });
+
     } else if (reqData.type === 'update' && reqData.clubId) {
       await updateDoc(doc(db, 'clubs', reqData.clubId), {
         name:        reqData.name,
@@ -172,12 +198,15 @@ async function approveClubRequest(reqId, reqData) {
         contactInfo: reqData.contactInfo || '',
         updatedAt:   serverTimestamp(),
       });
+      await updateDoc(doc(db, 'clubRequests', reqId), { status: 'approved' });
     }
-    await updateDoc(doc(db, 'clubRequests', reqId), { status: 'approved' });
+
     toast('동아리 신청이 승인되었습니다.', 'success');
   } catch (err) {
     console.error(err);
     toast('승인 처리 중 오류가 발생했습니다.', 'error');
+    // 실패 시 processing 상태를 pending으로 복원
+    try { await updateDoc(doc(db, 'clubRequests', reqId), { status: 'pending' }); } catch(_) {}
   }
 }
 
